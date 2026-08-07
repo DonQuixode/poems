@@ -1,0 +1,1780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poems</title>
+<style>
+  :root {
+    --bg:        #000;
+    --surface:   #0a0a0a;
+    --text:      #fff;
+    --text-dim:  #a0a0a0;
+    --text-past: #3a3a3a;
+    --border:    #1a1a1a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    height: 100dvh;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* disable selection on UI chrome */
+  .sidebar, button, input, .menu-btn, .modal-overlay, .hint { user-select: none; -webkit-user-select: none; }
+
+  /* ═══════════ SIDEBAR ═══════════ */
+  .sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 20;
+    transition: transform 0.3s ease;
+  }
+
+  /* ── search ── */
+  .search-wrap {
+    padding: 1.25rem 1.25rem 0.75rem;
+    flex-shrink: 0;
+    display: flex;
+    gap: 0.45rem;
+    align-items: center;
+  }
+  .search-input {
+    flex: 1;
+    min-width: 0;
+    background: #111;
+    border: 1px solid #1e1e1e;
+    border-radius: 8px;
+    color: #ccc;
+    font-family: inherit;
+    font-size: 0.82rem;
+    padding: 0.55rem 2.25rem 0.55rem 2rem;
+    outline: none;
+    transition: border-color 0.2s ease, background 0.2s ease;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 0.6rem center;
+  }
+  .search-input:focus {
+    border-color: #333;
+    background-color: #161616;
+    color: #fff;
+  }
+  .search-input::placeholder {
+    color: #444;
+  }
+
+  /* ── import button ── */
+  .import-btn {
+    flex-shrink: 0;
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    border: 1px solid #1e1e1e;
+    background: #111;
+    color: #555;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+    line-height: 1;
+  }
+  .import-btn:hover {
+    color: #ccc;
+    border-color: #333;
+    background: #181818;
+  }
+
+  /* ── scrollable list area ── */
+  .sidebar-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 1rem;
+  }
+  .sidebar-scroll::-webkit-scrollbar { width: 3px; }
+  .sidebar-scroll::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+
+  /* ── author group ── */
+  .author-group {
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .author-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.25rem;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: #888;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    width: 100%;
+    text-align: left;
+    transition: color 0.2s ease;
+  }
+  .author-header:hover {
+    color: #ccc;
+    background: rgba(255,255,255,0.02);
+  }
+  .author-header .chevron {
+    font-size: 0.55rem;
+    transition: transform 0.25s ease;
+    opacity: 0.5;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+  .author-group.open .author-header .chevron {
+    transform: rotate(90deg);
+    opacity: 0.8;
+  }
+  .author-header .count {
+    font-weight: 400;
+    opacity: 0.5;
+    font-size: 0.7rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  /* ── poems within group ── */
+  .author-poems {
+    display: none;
+  }
+  .author-group.open .author-poems {
+    display: block;
+  }
+
+  /* ── poem entry ── */
+  .poem-entry {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.55rem 1.25rem 0.55rem 2rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border: none;
+    background: none;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 0.85rem;
+    text-align: left;
+    width: 100%;
+    letter-spacing: 0.01em;
+  }
+  .poem-entry:hover {
+    background: rgba(255,255,255,0.04);
+    color: #ddd;
+  }
+  .poem-entry.current {
+    color: #fff;
+    background: rgba(255,255,255,0.06);
+  }
+  .poem-entry .dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .poem-entry.current .dot {
+    opacity: 1;
+  }
+  .poem-entry .ptitle {
+    font-weight: 450;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .poem-entry .del-btn {
+    opacity: 0;
+    flex-shrink: 0;
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: #555;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0 1px;
+    line-height: 1;
+    transition: opacity 0.15s, color 0.15s;
+  }
+  .poem-entry .edit-btn {
+    opacity: 0;
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: #555;
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 0 1px;
+    line-height: 1;
+    transition: opacity 0.15s, color 0.15s;
+  }
+  .poem-entry:hover .del-btn,
+  .poem-entry.current .del-btn,
+  .poem-entry:hover .edit-btn,
+  .poem-entry.current .edit-btn {
+    opacity: 1;
+  }
+  .poem-entry .del-btn:hover { color: #c44; }
+  .poem-entry .edit-btn:hover { color: #ccc; }
+
+  .poem-entry .ann-indicator {
+    opacity: 0;
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 0.7rem;
+    cursor: pointer;
+    padding: 0 1px;
+    line-height: 1;
+    transition: opacity 0.15s, color 0.15s;
+  }
+  .poem-entry:hover .ann-indicator,
+  .poem-entry.current .ann-indicator {
+    opacity: 1;
+  }
+  .poem-entry .ann-indicator:hover { color: #ddd; }
+
+  /* ── empty search state ── */
+  .empty-search {
+    padding: 2rem 1.25rem;
+    text-align: center;
+    color: #444;
+    font-size: 0.82rem;
+  }
+
+  /* ═══════════ TOGGLE BUTTON (mobile) ═══════════ */
+  .menu-btn {
+    display: none;
+    position: fixed;
+    top: 1rem; left: 1rem;
+    z-index: 30;
+    background: rgba(20,20,20,0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    color: #ccc;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+  }
+  .menu-btn:hover { color: #fff; }
+
+  /* ═══════════ MAIN LYRIC AREA ═══════════ */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .viewport {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: y mandatory;
+    transition: margin-right 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 18%,
+      black 82%,
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 18%,
+      black 82%,
+      transparent 100%
+    );
+  }
+  .viewport::-webkit-scrollbar { display: none; }
+
+  .spacer {
+    height: calc(50dvh - 2.5rem);
+    scroll-snap-align: start;
+  }
+
+  .couplet {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 5.2rem;
+    padding: 1rem 2rem;
+    scroll-snap-align: center;
+  }
+
+  .line {
+    font-size: clamp(1.2rem, 3.5vw, 1.75rem);
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 1.5;
+    text-align: center;
+    max-width: 640px;
+    color: var(--text-dim);
+    transition: color 0.45s ease, text-shadow 0.45s ease;
+    user-select: text;
+    -webkit-user-select: text;
+  }
+  .line + .line { margin-top: 0.15rem; }
+
+  .couplet.active .line {
+    color: #fff;
+    text-shadow: 0 0 18px rgba(255,255,255,0.25);
+  }
+  .couplet.past .line {
+    color: var(--text-past);
+  }
+
+  .meta {
+    text-align: center;
+    padding: 2rem 2rem 3rem;
+    scroll-snap-align: start;
+  }
+  .meta .mtitle {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #e0e0e0;
+    letter-spacing: 0.02em;
+  }
+  .meta .mpoet {
+    font-size: 1rem;
+    font-weight: 400;
+    color: #707070;
+    margin-top: 0.35rem;
+  }
+
+  /* ── hint ── */
+  .hint {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #555;
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+    z-index: 10;
+  }
+  .hint.visible { opacity: 1; }
+
+  /* ── overlay (mobile) ── */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 15;
+  }
+
+  /* ═══════════ IMPORT MODAL ═══════════ */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 14px;
+    width: 440px;
+    max-width: 92vw;
+    max-height: 85dvh;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .modal::-webkit-scrollbar { width: 3px; }
+  .modal::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+
+  .modal h2 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #888;
+  }
+
+  .modal .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .modal .field label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #555;
+  }
+  .modal .field input {
+    width: 100%;
+    background: #0a0a0a;
+    border: 1px solid #1e1e1e;
+    border-radius: 8px;
+    color: #ccc;
+    font-family: inherit;
+    font-size: 0.85rem;
+    padding: 0.55rem 0.75rem;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .modal .field input:focus,
+  .modal .field textarea:focus {
+    border-color: #333;
+    background: #111;
+    color: #fff;
+  }
+
+  .modal .field textarea {
+    width: 100%;
+    background: #0a0a0a;
+    border: 1px solid #1e1e1e;
+    border-radius: 8px;
+    color: #ccc;
+    font-family: inherit;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    padding: 0.55rem 0.75rem;
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .modal .btn-row {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+  }
+  .modal button {
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .btn-cancel {
+    background: transparent;
+    border: 1px solid #222;
+    color: #777;
+  }
+  .btn-cancel:hover { color: #ccc; border-color: #444; }
+  .btn-primary {
+    background: #fff;
+    border: 1px solid #fff;
+    color: #000;
+  }
+  .btn-primary:hover { background: #e0e0e0; }
+  .btn-primary:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid #333;
+    color: #aaa;
+  }
+  .btn-secondary:hover { border-color: #555; color: #fff; }
+  .btn-danger {
+    background: transparent;
+    border: 1px solid #822;
+    color: #c44;
+  }
+  .btn-danger:hover { background: #822; color: #fff; }
+
+  /* ── annotations panel (right) ── */
+  .ann-panel {
+    position: fixed;
+    top: 0; right: 0;
+    width: 320px;
+    height: 100dvh;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    z-index: 30;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .ann-panel.open { transform: translateX(0); }
+
+  .ann-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .ann-header h3 {
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: #999;
+    text-transform: uppercase;
+  }
+  .ann-close {
+    background: none;
+    border: none;
+    color: #555;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 2px 4px;
+    line-height: 1;
+  }
+  .ann-close:hover { color: #ccc; }
+
+  .ann-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .ann-scroll::-webkit-scrollbar { width: 3px; }
+  .ann-scroll::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+
+  .ann-card {
+    background: #0d0d0d;
+    border: 1px solid #181818;
+    border-radius: 10px;
+    padding: 0.75rem 0.85rem;
+    transition: border-color 0.2s;
+  }
+  .ann-card:hover { border-color: #252525; }
+  .ann-quote {
+    font-style: italic;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: #ccc;
+    margin-bottom: 0.35rem;
+  }
+  .ann-quote::before { content: '\201C'; color: #444; }
+  .ann-quote::after  { content: '\201D'; color: #444; }
+  .ann-explanation {
+    font-size: 0.72rem;
+    line-height: 1.4;
+    color: #777;
+    margin-bottom: 0.4rem;
+  }
+  .ann-source {
+    font-size: 0.65rem;
+    color: #555;
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+  .ann-source:hover { color: #888; text-decoration: underline; }
+  .ann-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .ann-remove {
+    background: none;
+    border: none;
+    color: #444;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0 0.15rem;
+    line-height: 1;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .ann-card:hover .ann-remove { opacity: 1; }
+  .ann-remove:hover { color: #c44; }
+  .ann-empty {
+    text-align: center;
+    color: #444;
+    font-size: 0.75rem;
+    margin-top: 2rem;
+    line-height: 1.5;
+  }
+
+  /* ── analyze button ── */
+  .analyze-btn {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 25;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: #888;
+    font-family: inherit;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    padding: 0.45rem 0.9rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .analyze-btn:hover { color: #fff; border-color: #333; }
+  .analyze-btn.loading { opacity: 0.5; pointer-events: none; }
+  .ann-panel.open ~ .analyze-btn { right: 336px; }
+
+  @media (max-width: 768px) {
+    .ann-panel { width: 100vw; }
+    .ann-panel.open ~ .analyze-btn { right: 1rem; opacity: 0; pointer-events: none; }
+  }
+  .delete-confirm {
+    text-align: center;
+  }
+  .dc-msg {
+    font-size: 0.85rem;
+    color: #aaa;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+  }
+  .dc-msg strong {
+    color: #fff;
+    font-weight: 500;
+  }
+
+  .scrape-preview {
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
+    border-radius: 8px;
+    padding: 0.75rem;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 0.78rem;
+    color: #888;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    display: none;
+  }
+  .scrape-preview.visible { display: block; }
+
+  .scrape-status {
+    font-size: 0.75rem;
+    color: #666;
+    text-align: center;
+    display: none;
+  }
+  .scrape-status.visible { display: block; }
+  .scrape-status.error { color: #c44; }
+
+  /* ── multi-poem list inside modal ── */
+  .poem-list-wrap {
+    display: none;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .poem-list-wrap.visible { display: flex; }
+
+  .poem-list-actions {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    font-size: 0.7rem;
+    color: #444;
+  }
+  .poem-list-actions .sep { opacity: 0.4; }
+  .link-btn {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.7rem;
+    padding: 0;
+    letter-spacing: 0.03em;
+  }
+  .link-btn:hover { color: #ccc; }
+
+  .poem-list {
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .poem-list::-webkit-scrollbar { width: 3px; }
+  .poem-list::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+
+  .poem-check-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.45rem 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .poem-check-row:hover { background: rgba(255,255,255,0.03); }
+  .poem-check-row input[type="checkbox"] {
+    margin-top: 2px;
+    accent-color: #fff;
+    flex-shrink: 0;
+  }
+  .poem-check-row .pcr-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .poem-check-row .pcr-title {
+    font-size: 0.8rem;
+    color: #ccc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .poem-check-row .pcr-meta {
+    font-size: 0.68rem;
+    color: #555;
+  }
+  .poem-check-row .pcr-preview-btn {
+    background: none;
+    border: 1px solid #222;
+    color: #555;
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .poem-check-row .pcr-preview-btn:hover { color: #ccc; border-color: #444; }
+
+  /* ═══════════ RESPONSIVE ═══════════ */
+  @media (max-width: 640px) {
+    .sidebar {
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      transform: translateX(-100%);
+    }
+    .sidebar.open {
+      transform: translateX(0);
+    }
+    .overlay.open {
+      display: block;
+    }
+    .menu-btn {
+      display: flex;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="search-wrap">
+    <input type="text" class="search-input" id="searchInput" placeholder="Search poems…" autocomplete="off" spellcheck="false">
+    <button class="import-btn" id="importBtn" title="Import poem from URL" aria-label="Import poem">+</button>
+  </div>
+  <div class="sidebar-scroll" id="poemList"></div>
+</aside>
+
+<div class="overlay" id="overlay"></div>
+<button class="menu-btn" id="menuBtn" aria-label="Poems">☰</button>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<main class="main">
+  <div class="viewport" id="viewport"></div>
+</main>
+
+<!-- ═══════════ ANNOTATIONS PANEL ═══════════ -->
+<aside class="ann-panel" id="annPanel">
+  <div class="ann-header">
+    <h3>Analysis</h3>
+    <button class="ann-close" id="annClose" aria-label="Close annotations">&times;</button>
+  </div>
+  <div class="ann-scroll" id="annScroll">
+    <div class="ann-empty">No analysis yet.<br>Click <strong>Analyze</strong> to search the web for explanations.</div>
+  </div>
+</aside>
+
+<button class="analyze-btn" id="analyzeBtn" title="Search the web for analysis">Analyze</button>
+
+<div class="hint visible" id="hint">scroll to read  ·  ↕</div>
+
+<!-- ═══════════ IMPORT MODAL ═══════════ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <h2 id="modalTitle">Import Poem</h2>
+
+    <!-- import fields -->
+    <div class="field" id="importFields">
+      <label for="importUrl">Paste a poem page URL</label>
+      <input type="url" id="importUrl" placeholder="https://…" autocomplete="off" spellcheck="false">
+    </div>
+
+    <!-- edit fields -->
+    <div class="field" id="editFields" style="display:none">
+      <label for="editTitle">Title</label>
+      <input type="text" id="editTitle" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="field" id="editPoetField" style="display:none">
+      <label for="editPoet">Poet</label>
+      <input type="text" id="editPoet" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="field" id="editLinesField" style="display:none">
+      <label for="editLines">Lines (one per line, blank line = stanza break)</label>
+      <textarea id="editLines" rows="12" spellcheck="false"></textarea>
+    </div>
+
+    <div class="scrape-status" id="scrapeStatus"></div>
+    <div class="scrape-preview" id="scrapePreview"></div>
+
+    <!-- delete confirmation -->
+    <div class="delete-confirm" id="deleteConfirm" style="display:none">
+      <p class="dc-msg" id="dcMsg"></p>
+      <div class="btn-row" style="justify-content:center; gap:0.5rem;">
+        <button class="btn-secondary" id="btnRemoveView">Remove from view</button>
+        <button class="btn-danger" id="btnDeleteForever">Delete forever</button>
+      </div>
+    </div>
+
+    <!-- multi-poem list -->
+    <div class="poem-list-wrap" id="poemListWrap">
+      <div class="poem-list-actions">
+        <button class="link-btn" id="btnSelectAll">Select All</button>
+        <span class="sep">·</span>
+        <button class="link-btn" id="btnDeselectAll">Deselect All</button>
+      </div>
+      <div class="poem-list" id="poemCheckList"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-cancel" id="btnCancel">Cancel</button>
+      <button class="btn-primary" id="btnScrape">Scrape</button>
+      <button class="btn-primary" id="btnAdd" style="display:none">Add to Collection</button>
+      <button class="btn-primary" id="btnImportSelected" style="display:none">Import Selected (0)</button>
+      <button class="btn-primary" id="btnSave" style="display:none">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ DATA STORE ═══════════ -->
+<script src="poems.js"></script>
+<script>
+  if (typeof POEMS === 'undefined') {
+    var POEMS = [
+      { id:'tonight', title:'Tonight', poet:'Agha Shahid Ali',
+        lines:['Pale hands I loved beside the Shalimar','—Where are you now? Who lies beneath your spell tonight?'] }
+    ];
+  }
+</script>
+
+<!-- ═══════════ APP LOGIC ═══════════ -->
+<script>
+  const viewport   = document.getElementById('viewport');
+  const sidebar    = document.getElementById('sidebar');
+  const poemList   = document.getElementById('poemList');
+  const searchInput = document.getElementById('searchInput');
+  const menuBtn    = document.getElementById('menuBtn');
+  const overlay    = document.getElementById('overlay');
+  const hint       = document.getElementById('hint');
+  const annPanel   = document.getElementById('annPanel');
+  const annScroll  = document.getElementById('annScroll');
+  const annClose   = document.getElementById('annClose');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+
+  let currentPoemId = null;
+  let hinted = false;
+  let expandedAuthors = new Set();
+
+  /* ── helpers ── */
+  function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  /* ── group poems by poet ── */
+  function groupByAuthor(poems) {
+    const map = new Map();
+    poems.forEach(p => {
+      const key = p.poet;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(p);
+    });
+    // preserve original order of first appearance
+    return [...map.entries()];
+  }
+
+  /* ── build sidebar (optionally filtered) ── */
+  function buildSidebar(filter) {
+    const term = (filter || '').toLowerCase().trim();
+    let filtered = POEMS;
+    if (term) {
+      filtered = POEMS.filter(p =>
+        p.title.toLowerCase().includes(term) ||
+        p.poet.toLowerCase().includes(term)
+      );
+    }
+
+    const groups = groupByAuthor(filtered);
+
+    poemList.innerHTML = '';
+
+    if (filtered.length === 0) {
+      poemList.innerHTML = '<div class="empty-search">No poems match &ldquo;' + esc(filter || '') + '&rdquo;</div>';
+      return;
+    }
+
+    groups.forEach(([poet, poems]) => {
+      const group = document.createElement('div');
+      group.className = 'author-group';
+      group.dataset.author = poet;
+
+      // auto-expand when searching, or if this author contains current poem
+      const shouldOpen = term
+        ? true
+        : (expandedAuthors.has(poet) || expandedAuthors.size === 0);
+
+      if (shouldOpen) {
+        group.classList.add('open');
+        expandedAuthors.add(poet);
+      }
+
+      const header = document.createElement('button');
+      header.className = 'author-header';
+      header.innerHTML = `<span>${esc(poet)}</span>
+        <span class="count">${poems.length}</span>
+        <span class="chevron">▶</span>`;
+      header.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleAuthor(poet, group);
+      });
+      group.appendChild(header);
+
+      const poemsDiv = document.createElement('div');
+      poemsDiv.className = 'author-poems';
+
+      poems.forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = 'poem-entry';
+        btn.dataset.poemId = p.id;
+        const hasAnn = p.annotations && p.annotations.length > 0;
+        btn.innerHTML = `<span class="dot"></span>
+          <span class="ptitle">${esc(p.title)}</span>
+          ${hasAnn ? '<span class="ann-indicator" title="Read analysis (' + p.annotations.length + ')">&#128214;</span>' : ''}
+          <span class="edit-btn" title="Edit poem">&#9998;</span>
+          <span class="del-btn" title="Delete poem">&times;</span>`;
+        btn.addEventListener('click', (e) => {
+          if (e.target.closest('.del-btn')) {
+            e.stopPropagation();
+            openDeleteConfirm(p);
+            return;
+          }
+          if (e.target.closest('.edit-btn')) {
+            e.stopPropagation();
+            openEditModal(p);
+            return;
+          }
+          if (e.target.closest('.ann-indicator')) {
+            e.stopPropagation();
+            if (currentPoemId !== p.id) loadPoem(p.id);
+            toggleAnnotations(true);
+            return;
+          }
+          loadPoem(p.id);
+          closeSidebar();
+        });
+        poemsDiv.appendChild(btn);
+      });
+
+      group.appendChild(poemsDiv);
+      poemList.appendChild(group);
+    });
+
+    // re-apply current highlight
+    if (currentPoemId) markSidebar(currentPoemId);
+  }
+
+  function toggleAuthor(poet, groupEl) {
+    const el = groupEl || poemList.querySelector(`.author-group[data-author="${CSS.escape(poet)}"]`);
+    if (!el) return;
+    const open = el.classList.toggle('open');
+    if (open) {
+      expandedAuthors.add(poet);
+    } else {
+      expandedAuthors.delete(poet);
+    }
+  }
+
+  function ensureAuthorOpen(poet) {
+    expandedAuthors.add(poet);
+    const el = poemList.querySelector(`.author-group[data-author="${CSS.escape(poet)}"]`);
+    if (el) el.classList.add('open');
+  }
+
+  /* ── highlight current poem in sidebar ── */
+  function markSidebar(id) {
+    poemList.querySelectorAll('.poem-entry').forEach(b => {
+      b.classList.toggle('current', b.dataset.poemId === id);
+    });
+    // ensure parent author group is open
+    const entry = poemList.querySelector(`.poem-entry[data-poem-id="${id}"]`);
+    if (entry) {
+      const group = entry.closest('.author-group');
+      if (group && !group.classList.contains('open')) {
+        const poet = group.dataset.author;
+        toggleAuthor(poet, group);
+      }
+    }
+  }
+
+  /* ── render poem in viewport ── */
+  function renderPoem(poem) {
+    viewport.innerHTML = '';
+
+    const s1 = document.createElement('div');
+    s1.className = 'spacer';
+    viewport.appendChild(s1);
+
+    let i = 0;
+    while (i < poem.lines.length) {
+      if (poem.lines[i] === '') { i++; continue; }
+      const cDiv = document.createElement('div');
+      cDiv.className = 'couplet';
+      let taken = 0;
+      while (i < poem.lines.length && taken < 2) {
+        if (poem.lines[i] === '') { i++; continue; }
+        const p = document.createElement('p');
+        p.className = 'line';
+        p.textContent = poem.lines[i];
+        cDiv.appendChild(p);
+        i++;
+        taken++;
+      }
+      viewport.appendChild(cDiv);
+    }
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.innerHTML = `<p class="mtitle">${esc(poem.title)}</p>
+                      <p class="mpoet">${esc(poem.poet)}</p>`;
+    viewport.appendChild(meta);
+
+    const s2 = document.createElement('div');
+    s2.className = 'spacer';
+    s2.style.height = 'calc(50dvh - 4rem)';
+    viewport.appendChild(s2);
+
+    viewport.scrollTop = 0;
+    hinted = false;
+    hint.classList.add('visible');
+    updateActive();
+  }
+
+  /* ── load poem ── */
+  function loadPoem(id) {
+    const poem = POEMS.find(p => p.id === id);
+    if (!poem) return;
+    currentPoemId = id;
+    renderPoem(poem);
+    ensureAuthorOpen(poem.poet);
+    markSidebar(id);
+    history.replaceState(null, '', '#' + id);
+    updateAnalyzeUI(poem);
+    renderAnnotations(poem);
+  }
+
+  /* ── annotations panel ── */
+  function toggleAnnotations(open) {
+    if (!annPanel) return;
+    const show = open !== undefined ? open : !annPanel.classList.contains('open');
+    annPanel.classList.toggle('open', show);
+    if (analyzeBtn) analyzeBtn.style.display = currentPoemId ? '' : 'none';
+    viewport.style.marginRight = show ? '320px' : '';
+  }
+
+  // ── annotations panel toggle (with null guards) ──
+  if (annClose) annClose.addEventListener('click', () => toggleAnnotations(false));
+  if (analyzeBtn) analyzeBtn.addEventListener('click', () => {
+    if (!currentPoemId) return;
+    const poem = POEMS.find(p => p.id === currentPoemId);
+    if (!poem) return;
+    analyzePoem(poem);
+  });
+
+  function markAnnotated(poem) {
+    const entry = document.querySelector(`.poem-entry[data-poem-id="${poem.id}"]`);
+    if (!entry) return;
+    if (entry.querySelector('.ann-indicator')) return;
+    const icon = document.createElement('span');
+    icon.className = 'ann-indicator';
+    icon.title = `Read analysis (${poem.annotations ? poem.annotations.length : 0})`;
+    icon.innerHTML = '&#128214;';
+    const editBtn = entry.querySelector('.edit-btn');
+    if (editBtn) entry.insertBefore(icon, editBtn);
+  }
+
+  function updateAnalyzeUI(poem) {
+    if (!analyzeBtn) return;
+    analyzeBtn.style.display = poem ? '' : 'none';
+    if (poem && poem.annotations && poem.annotations.length) {
+      analyzeBtn.textContent = 'Re-analyze';
+      analyzeBtn.style.color = '#aaa';
+    } else {
+      analyzeBtn.textContent = 'Analyze';
+      analyzeBtn.style.color = '#888';
+    }
+  }
+
+  function renderAnnotations(poem) {
+    annScroll.innerHTML = '';
+    if (!poem.annotations || poem.annotations.length === 0) {
+      annScroll.innerHTML = '<div class="ann-empty">No analysis yet.<br>Click <strong>Analyze</strong> to search the web for explanations.</div>';
+      return;
+    }
+    poem.annotations.forEach((a, i) => {
+      const card = document.createElement('div');
+      card.className = 'ann-card';
+      card.innerHTML =
+        `<div class="ann-quote">${esc(a.quote)}</div>
+         <div class="ann-footer">
+           <a class="ann-source" href="${esc(a.sourceUrl)}" target="_blank" rel="noopener">${esc(a.sourceTitle || a.sourceUrl)}</a>
+           <button class="ann-remove" title="Remove this quote" data-idx="${i}">&times;</button>
+         </div>`;
+      card.querySelector('.ann-remove').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // POST to queue before removing locally
+        fetch('/queue-remove', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quote: a.quote, sourceTitle: a.sourceTitle, sourceUrl: a.sourceUrl, poemTitle: poem.title, poemPoet: poem.poet })
+        }).catch(() => {});
+        poem.annotations.splice(i, 1);
+        saveToDisk();
+        renderAnnotations(poem);
+      });
+      annScroll.appendChild(card);
+    });
+  }
+
+  let activeAnalysisId = null;
+  let analysisES = null; // active EventSource
+
+  function closeAnalysisStream() {
+    if (analysisES) { analysisES.close(); analysisES = null; }
+  }
+
+  async function analyzePoem(poem) {
+    if (!analyzeBtn) return;
+    if (activeAnalysisId === poem.id) return;
+    closeAnalysisStream();
+    activeAnalysisId = poem.id;
+    analyzeBtn.classList.add('loading');
+    analyzeBtn.textContent = 'Starting…';
+    toggleAnnotations(true);
+    annScroll.innerHTML = '<div class="ann-empty" style="color:#666">Starting analysis…</div>';
+
+    try {
+      const startResp = await fetch('/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: poem.title, poet: poem.poet, lines: poem.lines })
+      });
+      const startData = await startResp.json();
+      if (!startData.ok || !startData.jobId) {
+        if (isCurrentPoem(poem)) showError(startData.error || 'Failed to start');
+        activeAnalysisId = null;
+        if (isCurrentPoem(poem)) { analyzeBtn.classList.remove('loading'); updateAnalyzeUI(poem); }
+        return;
+      }
+
+      const jobId = startData.jobId;
+
+      // open SSE connection for real-time updates
+      analysisES = new EventSource('/analyze-events/' + jobId);
+
+      analysisES.addEventListener('status', (e) => {
+        if (!isCurrentPoem(poem)) return;
+        const d = JSON.parse(e.data);
+        if (d.status === 'done' || d.status === 'error') {
+          if (d.error && isCurrentPoem(poem)) showError(d.error);
+          return;
+        }
+        const label = d.label || d.status;
+        analyzeBtn.textContent = label;
+        annScroll.innerHTML = `<div class="ann-empty" style="color:#666">${esc(label)}</div>`;
+      });
+
+      analysisES.addEventListener('result', (e) => {
+        const d = JSON.parse(e.data);
+        poem.annotations = d.annotations || [];
+        saveToDisk();
+        if (poem.annotations.length > 0) markAnnotated(poem);
+        if (isCurrentPoem(poem)) {
+          if (poem.annotations.length > 0) {
+            renderAnnotations(poem);
+            toggleAnnotations(true);
+          } else {
+            annScroll.innerHTML = '<div class="ann-empty">No quotations found for this poem.</div>';
+          }
+          analyzeBtn.classList.remove('loading');
+          updateAnalyzeUI(poem);
+        }
+        closeAnalysisStream();
+        if (activeAnalysisId === poem.id) activeAnalysisId = null;
+      });
+
+      analysisES.onerror = () => {
+        // SSE connection closed or errored — job may still be running
+        // if no result arrived, it was a transport error
+        closeAnalysisStream();
+        if (activeAnalysisId === poem.id) {
+          // check if we got annotations already
+          if (!poem.annotations || poem.annotations.length === 0) {
+            if (isCurrentPoem(poem)) showError('Connection lost. The job may still complete on the server.');
+          }
+          activeAnalysisId = null;
+          if (isCurrentPoem(poem)) { analyzeBtn.classList.remove('loading'); updateAnalyzeUI(poem); }
+        }
+      };
+
+    } catch (e) {
+      if (isCurrentPoem(poem)) showError(e.message.includes('Failed to fetch') ? 'Cannot reach server.' : e.message);
+      activeAnalysisId = null;
+      if (isCurrentPoem(poem)) { analyzeBtn.classList.remove('loading'); updateAnalyzeUI(poem); }
+    }
+  }
+
+  function isCurrentPoem(poem) { return currentPoemId === poem.id; }
+  function showError(msg) { annScroll.innerHTML = `<div class="ann-empty" style="color:#844">${esc(msg)}</div>`; }
+
+  /* ── active couplet detection ── */
+  function updateActive() {
+    const couplets = viewport.querySelectorAll('.couplet');
+    const vpCenter = viewport.scrollTop + viewport.clientHeight / 2;
+    let closest = null, minDist = Infinity;
+
+    couplets.forEach(c => {
+      const rect = c.getBoundingClientRect();
+      const elCenter = rect.top + rect.height / 2;
+      const dist = Math.abs(elCenter - viewport.clientHeight / 2);
+      if (dist < minDist) { minDist = dist; closest = c; }
+    });
+
+    couplets.forEach(c => {
+      c.classList.remove('active', 'past');
+      if (c === closest) {
+        c.classList.add('active');
+      } else if (c.compareDocumentPosition(closest) & Node.DOCUMENT_POSITION_FOLLOWING) {
+        c.classList.add('past');
+      }
+    });
+  }
+
+  /* ── events ── */
+  viewport.addEventListener('scroll', () => {
+    updateActive();
+    if (!hinted) { hinted = true; hint.classList.remove('visible'); }
+  }, { passive: true });
+
+  // click on main area → advance one couplet
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.sidebar, .menu-btn, .overlay, a, button, input, .ann-panel, .analyze-btn, .modal-overlay')) return;
+    const active = viewport.querySelector('.couplet.active');
+    if (!active) return;
+    const next = active.nextElementSibling;
+    if (next && next.classList.contains('couplet')) {
+      next.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+
+  // keyboard: arrows / jk for navigation, / for search focus
+  document.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey) return;
+
+    // slash focuses search
+    if (e.key === '/' && document.activeElement !== searchInput) {
+      e.preventDefault();
+      searchInput.focus();
+      searchInput.select();
+      return;
+    }
+
+    const active = viewport.querySelector('.couplet.active');
+    if (!active) return;
+
+    let target = null;
+    if (e.key === 'ArrowDown' || e.key === 'j') {
+      target = active.nextElementSibling;
+    } else if (e.key === 'ArrowUp' || e.key === 'k') {
+      target = active.previousElementSibling;
+    }
+    if (target && target.classList.contains('couplet')) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+
+  // search input
+  let searchTimer;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      const val = searchInput.value;
+      if (val.trim()) {
+        // when searching, we'll rebuild with all groups open
+        expandedAuthors.clear();
+      }
+      buildSidebar(val);
+      // re-mark current if still in filtered results
+      if (currentPoemId) markSidebar(currentPoemId);
+    }, 150);
+  });
+
+  // Esc clears search
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      searchInput.value = '';
+      expandedAuthors.clear();
+      buildSidebar('');
+      if (currentPoemId) {
+        ensureAuthorOpen(POEMS.find(p => p.id === currentPoemId)?.poet || '');
+        markSidebar(currentPoemId);
+      }
+      searchInput.blur();
+    }
+  });
+
+  /* ── mobile sidebar toggle ── */
+  function openSidebar()  { sidebar.classList.add('open'); overlay.classList.add('open'); }
+  function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('open'); }
+  menuBtn.addEventListener('click', openSidebar);
+  overlay.addEventListener('click', closeSidebar);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+      closeSidebar();
+    }
+  });
+
+  /* ── import modal ── */
+  const modalOverlay    = document.getElementById('modalOverlay');
+  const modalTitle      = document.getElementById('modalTitle');
+  const importFields    = document.getElementById('importFields');
+  const editFields      = document.getElementById('editFields');
+  const editPoetField   = document.getElementById('editPoetField');
+  const editLinesField  = document.getElementById('editLinesField');
+  const editTitle       = document.getElementById('editTitle');
+  const editPoet        = document.getElementById('editPoet');
+  const editLines       = document.getElementById('editLines');
+  const importUrl        = document.getElementById('importUrl');
+  const btnScrape        = document.getElementById('btnScrape');
+  const btnAdd           = document.getElementById('btnAdd');
+  const btnImportSel     = document.getElementById('btnImportSelected');
+  const btnSave          = document.getElementById('btnSave');
+  const btnSelectAll     = document.getElementById('btnSelectAll');
+  const btnDeselectAll   = document.getElementById('btnDeselectAll');
+  const btnCancel        = document.getElementById('btnCancel');
+  const scrapeStatus     = document.getElementById('scrapeStatus');
+  const scrapePreview    = document.getElementById('scrapePreview');
+  const poemListWrap     = document.getElementById('poemListWrap');
+  const poemCheckList    = document.getElementById('poemCheckList');
+  let   scrapedPoems     = [];
+  let   editingPoemId    = null;
+
+  function resetImportMode() {
+    importUrl.value = '';
+    scrapedPoems = [];
+    editingPoemId = null;
+    modalTitle.textContent = 'Import Poem';
+    importFields.style.display = '';
+    editFields.style.display = 'none';
+    editPoetField.style.display = 'none';
+    editLinesField.style.display = 'none';
+    scrapeStatus.classList.remove('visible', 'error');
+    scrapeStatus.textContent = '';
+    scrapePreview.classList.remove('visible');
+    scrapePreview.textContent = '';
+    poemListWrap.classList.remove('visible');
+    poemCheckList.innerHTML = '';
+    deleteConfirm.style.display = 'none';
+    deletingPoemId = null;
+    btnScrape.style.display = '';
+    btnScrape.disabled = false;
+    btnScrape.textContent = 'Scrape';
+    btnAdd.style.display = 'none';
+    btnImportSel.style.display = 'none';
+    btnSave.style.display = 'none';
+  }
+
+  function openModal() {
+    modalOverlay.classList.add('open');
+    resetImportMode();
+    setTimeout(() => importUrl.focus(), 100);
+  }
+
+  function openEditModal(poem) {
+    editingPoemId = poem.id;
+    modalOverlay.classList.add('open');
+    // hide import UI
+    modalTitle.textContent = 'Edit Poem';
+    importFields.style.display = 'none';
+    scrapeStatus.classList.remove('visible', 'error');
+    scrapePreview.classList.remove('visible');
+    poemListWrap.classList.remove('visible');
+    btnScrape.style.display = 'none';
+    btnAdd.style.display = 'none';
+    btnImportSel.style.display = 'none';
+    // show edit UI
+    editFields.style.display = '';
+    editPoetField.style.display = '';
+    editLinesField.style.display = '';
+    editTitle.value = poem.title;
+    editPoet.value = poem.poet;
+    editLines.value = poem.lines.join('\n');
+    btnSave.style.display = '';
+    btnSave.disabled = false;
+    setTimeout(() => editTitle.focus(), 100);
+  }
+
+  function closeModal() {
+    modalOverlay.classList.remove('open');
+  }
+
+  document.getElementById('importBtn').addEventListener('click', openModal);
+  btnCancel.addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) closeModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modalOverlay.classList.contains('open')) closeModal();
+  });
+
+  importUrl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') btnScrape.click();
+  });
+
+  // ── render poem checkboxes ──
+  function renderPoemList(poems) {
+    poemCheckList.innerHTML = '';
+    poems.forEach((p, i) => {
+      const row = document.createElement('label');
+      row.className = 'poem-check-row';
+      row.innerHTML = `
+        <input type="checkbox" checked data-index="${i}">
+        <span class="pcr-info">
+          <span class="pcr-title">${esc(p.title)}</span>
+          <span class="pcr-meta">${esc(p.poet)} · ${p.lines.length} lines</span>
+        </span>
+        <button type="button" class="pcr-preview-btn" data-index="${i}">preview</button>
+      `;
+      poemCheckList.appendChild(row);
+    });
+
+    // preview button handlers
+    poemCheckList.querySelectorAll('.pcr-preview-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const idx = parseInt(btn.dataset.index);
+        const p = scrapedPoems[idx];
+        scrapePreview.textContent = p.lines.slice(0, 20).join('\n') + (p.lines.length > 20 ? '\n…' : '');
+        scrapePreview.classList.add('visible');
+      });
+    });
+
+    updateSelectedCount();
+  }
+
+  function getCheckedIndices() {
+    const cbs = poemCheckList.querySelectorAll('input[type="checkbox"]');
+    const indices = [];
+    cbs.forEach(cb => { if (cb.checked) indices.push(parseInt(cb.dataset.index)); });
+    return indices;
+  }
+
+  function updateSelectedCount() {
+    const n = getCheckedIndices().length;
+    btnImportSel.textContent = `Import Selected (${n})`;
+    btnImportSel.disabled = n === 0;
+  }
+
+  poemCheckList.addEventListener('change', (e) => {
+    if (e.target.type === 'checkbox') updateSelectedCount();
+  });
+
+  btnSelectAll.addEventListener('click', () => {
+    poemCheckList.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = true; });
+    updateSelectedCount();
+  });
+
+  btnDeselectAll.addEventListener('click', () => {
+    poemCheckList.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+    updateSelectedCount();
+  });
+
+  // ── scrape button ──
+  btnScrape.addEventListener('click', async () => {
+    const url = importUrl.value.trim();
+    if (!url.startsWith('http')) {
+      scrapeStatus.textContent = 'Please enter a valid URL starting with http or https.';
+      scrapeStatus.classList.add('visible', 'error');
+      return;
+    }
+
+    btnScrape.disabled = true;
+    btnScrape.textContent = 'Scraping…';
+    scrapeStatus.textContent = 'Fetching page…';
+    scrapeStatus.classList.add('visible');
+    scrapeStatus.classList.remove('error');
+    scrapePreview.classList.remove('visible');
+    poemListWrap.classList.remove('visible');
+    btnAdd.style.display = 'none';
+    btnImportSel.style.display = 'none';
+    scrapedPoems = [];
+
+    try {
+      const resp = await fetch('/scrape', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await resp.json();
+
+      if (!data.ok) throw new Error(data.error || 'Scrape failed');
+
+      scrapedPoems = data.poems || [];
+
+      if (scrapedPoems.length === 0) {
+        scrapeStatus.textContent = 'No poems found on this page.';
+        scrapeStatus.classList.add('error');
+        btnScrape.disabled = false;
+        btnScrape.textContent = 'Scrape';
+        return;
+      }
+
+      if (scrapedPoems.length === 1) {
+        // single poem: show preview + Add button
+        const p = scrapedPoems[0];
+        scrapeStatus.textContent = `Found: "${p.title}" by ${p.poet} — ${p.lines.length} lines.`;
+        scrapeStatus.classList.remove('error');
+        scrapePreview.textContent = p.lines.slice(0, 20).join('\n') + (p.lines.length > 20 ? '\n…' : '');
+        scrapePreview.classList.add('visible');
+        btnScrape.style.display = 'none';
+        btnAdd.style.display = '';
+        btnAdd.textContent = 'Add to Collection';
+        btnAdd.disabled = false;
+      } else {
+        // multiple poems: show checkboxes
+        scrapeStatus.textContent = `Found ${scrapedPoems.length} poems on this page. Select which to import:`;
+        scrapeStatus.classList.remove('error');
+        renderPoemList(scrapedPoems);
+        poemListWrap.classList.add('visible');
+        btnScrape.style.display = 'none';
+        btnImportSel.style.display = '';
+        btnImportSel.disabled = false;
+      }
+    } catch (err) {
+      scrapeStatus.textContent = 'Error: ' + err.message;
+      scrapeStatus.classList.add('error');
+      btnScrape.disabled = false;
+      btnScrape.textContent = 'Scrape';
+    }
+  });
+
+  // ── add single poem ──
+  btnAdd.addEventListener('click', () => {
+    if (scrapedPoems.length !== 1) return;
+    const id = addPoemToCollection(scrapedPoems[0]);
+    finalizeImport(id);
+    closeModal();
+  });
+
+  // ── import selected ──
+  btnImportSel.addEventListener('click', () => {
+    const indices = getCheckedIndices();
+    let lastId = null;
+    indices.forEach(i => { lastId = addPoemToCollection(scrapedPoems[i]); });
+    finalizeImport(lastId);
+    closeModal();
+  });
+
+  function addPoemToCollection(poem) {
+    const base = poem.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    let id = base || 'imported';
+    let n = 1;
+    while (POEMS.find(p => p.id === id)) { n++; id = base + '-' + n; }
+    POEMS.push({ id, title: poem.title, poet: poem.poet, lines: poem.lines });
+    return id;
+  }
+
+  function finalizeImport(loadId) {
+    expandedAuthors.clear();
+    buildSidebar(searchInput.value || '');
+    if (loadId) loadPoem(loadId);
+    saveToDisk();
+  }
+
+  /* ── persist to poems.js ── */
+  function saveToDisk() {
+    fetch('/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ poems: POEMS })
+    }).catch(() => {}); // fire-and-forget
+  }
+
+  // ── save edited poem ──
+  btnSave.addEventListener('click', () => {
+    if (!editingPoemId) return;
+    const idx = POEMS.findIndex(p => p.id === editingPoemId);
+    if (idx === -1) return;
+
+    const newTitle = editTitle.value.trim() || 'Untitled';
+    const newPoet  = editPoet.value.trim() || 'Unknown';
+    const newLines = editLines.value.split('\n');
+
+    POEMS[idx].title = newTitle;
+    POEMS[idx].poet  = newPoet;
+    POEMS[idx].lines = newLines;
+
+    // if id was based on title, regenerate it
+    const base = newTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    let newId = base || 'edited';
+    if (newId !== editingPoemId) {
+      let n = 1;
+      while (POEMS.find(p => p.id === newId && p !== POEMS[idx])) { n++; newId = base + '-' + n; }
+      POEMS[idx].id = newId;
+    }
+
+    expandedAuthors.clear();
+    buildSidebar(searchInput.value || '');
+    loadPoem(POEMS[idx].id);
+    saveToDisk();
+    closeModal();
+  });
+
+  /* ── delete poem ── */
+  function deletePoem(id, permanent) {
+    const idx = POEMS.findIndex(p => p.id === id);
+    if (idx === -1) return;
+    POEMS.splice(idx, 1);
+
+    // if the deleted poem was currently loaded, pick a neighbour
+    if (currentPoemId === id) {
+      const next = POEMS[idx] || POEMS[Math.max(0, idx - 1)];
+      if (next) {
+        loadPoem(next.id);
+      } else {
+        viewport.innerHTML = '';
+        currentPoemId = null;
+      }
+    }
+
+    expandedAuthors.clear();
+    buildSidebar(searchInput.value || '');
+    markSidebar(currentPoemId);
+
+    if (permanent) saveToDisk();
+  }
+
+  /* ── delete confirmation modal ── */
+  let deletingPoemId = null;
+  const deleteConfirm  = document.getElementById('deleteConfirm');
+  const dcMsg          = document.getElementById('dcMsg');
+  const btnRemoveView  = document.getElementById('btnRemoveView');
+  const btnDeleteForever = document.getElementById('btnDeleteForever');
+
+  function openDeleteConfirm(poem) {
+    deletingPoemId = poem.id;
+    modalOverlay.classList.add('open');
+    modalTitle.textContent = 'Delete Poem';
+    importFields.style.display = 'none';
+    editFields.style.display = 'none';
+    editPoetField.style.display = 'none';
+    editLinesField.style.display = 'none';
+    scrapeStatus.classList.remove('visible', 'error');
+    scrapePreview.classList.remove('visible');
+    poemListWrap.classList.remove('visible');
+    btnScrape.style.display = 'none';
+    btnAdd.style.display = 'none';
+    btnImportSel.style.display = 'none';
+    btnSave.style.display = 'none';
+    deleteConfirm.style.display = '';
+    dcMsg.innerHTML = `<strong>${esc(poem.title)}</strong><br><span style="color:#777;font-size:0.75rem">${esc(poem.poet)}</span>`;
+    setTimeout(() => btnRemoveView.focus(), 100);
+  }
+
+  function closeDeleteConfirm() {
+    deleteConfirm.style.display = 'none';
+    deletingPoemId = null;
+    closeModal();
+  }
+
+  btnRemoveView.addEventListener('click', () => {
+    if (deletingPoemId) deletePoem(deletingPoemId, false);
+    closeDeleteConfirm();
+  });
+
+  btnDeleteForever.addEventListener('click', () => {
+    if (deletingPoemId) deletePoem(deletingPoemId, true);
+    closeDeleteConfirm();
+  });
+
+  /* ── bootstrap ── */
+  buildSidebar('');
+  if (analyzeBtn) analyzeBtn.style.display = 'none';
+
+  const hash = window.location.hash.replace('#', '');
+  const initial = (hash && POEMS.find(p => p.id === hash)) ? hash : POEMS[0].id;
+  loadPoem(initial);
+
+  window.addEventListener('hashchange', () => {
+    const h = window.location.hash.replace('#', '');
+    if (h && POEMS.find(p => p.id === h)) {
+      // clear search when navigating via hash
+      if (searchInput.value) {
+        searchInput.value = '';
+        expandedAuthors.clear();
+        buildSidebar('');
+      }
+      loadPoem(h);
+    }
+  });
+</script>
+
+</body>
+</html>
