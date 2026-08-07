@@ -89,6 +89,17 @@ No database. No npm packages. Just a single Node.js script serving static files 
 
 Your only cost is LLM API calls — roughly $0.005 per analysis. The server caches results in `poems.js` so re-analyzing the same poem costs nothing. The removal feedback loop improves quote quality over time, reducing the need for re-analysis.
 
+## Features in development
+
+- **Line-by-line annotations** — tap a line to see its analysis
+
+## Requests
+
+For feature requests or bug reports, either:
+
+- [Open a GitHub issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/creating-an-issue) on the repo
+- Email [umaralikhan1299@gmail.com](mailto:umaralikhan1299@gmail.com)
+
 ## License
 
 MIT
