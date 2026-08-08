@@ -2,6 +2,8 @@
 
 A local poetry reading app with LLM-powered analysis. Dark theme, Apple Music lyrics aesthetic. Zero dependencies.
 
+![UI](/poetica.jpeg)
+
 ## Requirements
 
 - Node.js 18 or later
