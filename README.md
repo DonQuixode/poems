@@ -47,7 +47,7 @@ Stop with:
 | **Browse** | 80 poems pre-loaded (T.S. Eliot, Mary Oliver, Agha Shahid Ali) |
 | **Search** | Press `/` to focus the search bar, filter by title or poet |
 | **Author groups** | Sidebar groups poems by poet, expand/collapse with counts |
-| **Import** | Click **+** to import a poem from any URL |
+| **Import** | Click **+** to import a poem/multiple poems from any URL |
 | **Edit** | Click the edit icon to modify title, poet, or lines |
 | **Delete** | Two-tier confirmation: remove from view or delete forever |
 | **Analyze** | Click **Analyze** to search the web for literary analysis. Quotes appear in a side panel with source links. |
